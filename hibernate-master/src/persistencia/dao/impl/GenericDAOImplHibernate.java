@@ -8,9 +8,13 @@ import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.query.Query;
+
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+
 
 public class GenericDAOImplHibernate<T, ID extends Serializable> implements GenericDAO<T, ID> {
     private SessionFactory sessionFactory;
@@ -70,9 +74,10 @@ public class GenericDAOImplHibernate<T, ID extends Serializable> implements Gene
     public List<T> traerTodos() throws Exception {
         Session session = sessionFactory.getCurrentSession();//.getCurrentSession();	
         try {
-            Query query = session.createQuery("SELECT e FROM " + getEntityClass().getName() + " e");
-            List<T> entities = query.list();
-            return entities;
+            Class<T> cl = getEntityClass();
+            CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(cl);
+            Root<T> root = query.from(cl);
+            return session.createQuery(query.select(root)).getResultList();
         } catch (Exception ex) {
             rollback(session);
             throw ex;
